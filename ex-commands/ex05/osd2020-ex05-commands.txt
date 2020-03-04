@@ -30,6 +30,34 @@ $ oc policy add-role-to-user edit system:serviceaccount:pipeline-${GUID}-dev:jen
 $ oc policy add-role-to-group system:image-puller system:serviceaccounts:pipeline-${GUID}-test -n pipeline-${GUID}-dev
 $ oc policy add-role-to-group system:image-puller system:serviceaccounts:pipeline-${GUID}-prod -n pipeline-${GUID}-dev
 
-https://github.com/svennam92/node-s2i-openshift
+# Deploy the "Cat of The Day" (cotd) application in the pipeline-${GUID}-dev project:
+$ oc new-app nodejs~https://github.com/svennam92/node-s2i-openshift -n pipeline-${GUID}-dev
+
+# Watch the build logs until the build is complete:
+$ oc logs -f build/node-s2i-openshift-1 -n pipeline-${GUID}-dev
+
+# Verify that the build completed and tag the image:
+$ oc tag node-s2i-openshift:latest node-s2i-openshift:testready -n pipeline-${GUID}-dev
+$ oc tag node-s2i-openshift:testready node-s2i-openshift:prodready -n pipeline-${GUID}-dev
+
+# Examine the image stream to verify that the tags were created:
+$ oc describe is node-s2i-openshift -n pipeline-${GUID}-dev
+
+# Deploy the node-s2i-openshift application in the pipeline-${GUID}-test and pipeline-${GUID}-prod projects:
+$ oc new-app pipeline-${GUID}-dev/node-s2i-openshift:testready --name=node-s2i-openshift -n pipeline-${GUID}-test
+$ oc new-app pipeline-${GUID}-dev/node-s2i-openshift:prodready --name=node-s2i-openshift -n pipeline-${GUID}-prod
+
+# Create routes for all three of the applications:
+$ oc expose service node-s2i-openshift -n pipeline-${GUID}-dev
+$ oc expose service node-s2i-openshift -n pipeline-${GUID}-test
+$ oc expose service node-s2i-openshift -n pipeline-${GUID}-prod
+
+# Disable automatic deployment for all of the deployment configurations in your demonstration:
+$ oc get dc cotd2 -o yaml -n pipeline-${GUID}-dev | sed 's/automatic: true/automatic: false/g' | oc replace -f -
+$ oc get dc cotd2 -o yaml -n pipeline-${GUID}-test | sed 's/automatic: true/automatic: false/g' | oc replace -f -
+$ oc get dc cotd2 -o yaml -n pipeline-${GUID}-prod | sed 's/automatic: true/automatic: false/g' | oc replace -f -
+
+
+
 
 
