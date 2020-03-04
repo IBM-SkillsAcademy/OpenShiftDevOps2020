@@ -8,3 +8,12 @@ oc set resources dc jenkins --limits=cpu=2 --requests=cpu=1,memory=2Gi
 watch oc get pod
 
 oc get route jenkins -o jsonpath='{.spec.host}{"\n"}'
+
+# Create projects for environments : DEV,TEST, PROD
+
+$ export GUID=health-ui
+$ oc new-project pipeline-${GUID}-dev --description="Health UI Development Environment" --display-name="Health UI- Dev"
+$ oc new-project pipeline-${GUID}-test --description="Health UI Testing Environment" --display-name="Health UI - Test"
+$ oc new-project pipeline-${GUID}-prod --description="Health UI Production Environment" --display-name="Health UI - Prod"
+
+$ oc get projects
