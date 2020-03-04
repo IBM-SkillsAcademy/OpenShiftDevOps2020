@@ -17,3 +17,19 @@ $ oc new-project pipeline-${GUID}-test --description="Health UI Testing Environm
 $ oc new-project pipeline-${GUID}-prod --description="Health UI Production Environment" --display-name="Health UI - Prod"
 
 $ oc get projects
+
+$ oc project pipeline-${GUID}-dev
+
+$ oc new-app jenkins-persistent -p ENABLE_OAUTH=true -n pipeline-${GUID}-dev
+
+# Enable the Jenkins service account to manage resources in the pipeline-${GUID}-test and pipeline-${GUID}-prod projects:
+$ oc policy add-role-to-user edit system:serviceaccount:pipeline-${GUID}-dev:jenkins -n pipeline-${GUID}-test
+$ oc policy add-role-to-user edit system:serviceaccount:pipeline-${GUID}-dev:jenkins -n pipeline-${GUID}-prod
+
+# Enable pulling of images from the pipeline-${GUID}-dev project to the pipeline-${GUID}-test and pipeline-${GUID}-prod projects:
+$ oc policy add-role-to-group system:image-puller system:serviceaccounts:pipeline-${GUID}-test -n pipeline-${GUID}-dev
+$ oc policy add-role-to-group system:image-puller system:serviceaccounts:pipeline-${GUID}-prod -n pipeline-${GUID}-dev
+
+https://github.com/svennam92/node-s2i-openshift
+
+
