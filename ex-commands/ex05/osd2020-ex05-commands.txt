@@ -1,3 +1,12 @@
+# Login with developer to crc
+oc login -u developer -p developer https://api.crc.testing:6443
+
+# Create projects for DEV,TEST,PROD
+$ export GUID=health-ui
+$ oc new-project pipeline-${GUID}-dev --description="Health UI Development Environment" --display-name="Health UI- Dev"
+$ oc new-project pipeline-${GUID}-test --description="Health UI Testing Environment" --display-name="Health UI - Test"
+$ oc new-project pipeline-${GUID}-prod --description="Health UI Production Environment" --display-name="Health UI - Prod"
+
 # This is a test command reference file for Exercise - 5 in the Red Hat OpenShift DevOps Engineer course 2020
 
 oc new-project yourproject-cicd --display-name="My CICD Project"
