@@ -1,2 +1,4 @@
 # This is a test command reference file for Exercise - 1 in the Red Hat OpenShift DevOps Engineer course 2020
 # This is a test line number 2
+# The OpenShift DevOps 2020 github repository is https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020.git
+# The Hello World git repo is https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020     /php-helloworld
