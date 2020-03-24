@@ -1,72 +1,164 @@
-# Login with developer to crc
-oc login -u developer -p developer https://api.crc.testing:6443
+#Part 1. Creating an application, configuring it with environment variables, config maps and volumes
 
-# Create projects for DEV,TEST,PROD
-$ export GUID=health-ui
-$ oc new-project pipeline-${GUID}-dev --description="Health UI Development Environment" --display-name="Health UI- Dev"
-$ oc new-project pipeline-${GUID}-test --description="Health UI Testing Environment" --display-name="Health UI - Test"
-$ oc new-project pipeline-${GUID}-prod --description="Health UI Production Environment" --display-name="Health UI - Prod"
+#Create a new project
+oc new-project $$-env
 
-# This is a test command reference file for Exercise - 5 in the Red Hat OpenShift DevOps Engineer course 2020
+#Create a new application:
+oc new-app https://github.com/svennam92/node-s2i-openshift
 
-oc new-project yourproject-cicd --display-name="My CICD Project"
+#Expose the application service:
+oc expose svc node-s2i-openshift
 
-oc new-app jenkins-persistent --param MEMORY_LIMIT=2Gi --param DISABLE_ADMINISTRATIVE_MONITORS=true --param ENABLE_OAUTH=true
-oc set resources dc jenkins --limits=cpu=2 --requests=cpu=1,memory=2Gi
+#Update the application by directly injecting environment variables:
+oc set env dc/node-s2i-openshift APP_VAR_1=Value1 APP_VAR_2=Value2
 
+#Examine the application looking for newly injected environment variables:
 watch oc get pod
+oc rsh node-s2i-openshift-2-zttdt env | grep APP
 
-oc get route jenkins -o jsonpath='{.spec.host}{"\n"}'
+#Delete an environment variable from the application:
+oc set env dc/node-s2i-openshift APP_VAR_2-
 
-# Create projects for environments : DEV,TEST, PROD
+#Create a config map:
+oc create configmap node-s2i-openshift-config --from-literal=APP_VAR_3=Value3 --from-literal=APP_VAR_4=Value4
 
-$ export GUID=health-ui
-$ oc new-project pipeline-${GUID}-dev --description="Health UI Development Environment" --display-name="Health UI- Dev"
-$ oc new-project pipeline-${GUID}-test --description="Health UI Testing Environment" --display-name="Health UI - Test"
-$ oc new-project pipeline-${GUID}-prod --description="Health UI Production Environment" --display-name="Health UI - Prod"
+#Add environment variables APP_VAR_3 and APP_VAR_4 to the application with config maps
+oc edit dc node-s2i-openshift
 
-$ oc get projects
+#Get the newly created pod name:
+oc get po | grep Running | awk '{print $1}'
 
-$ oc project pipeline-${GUID}-dev
+#Run the env command on the new pod and look for the newly added variables
+oc rsh node-s2i-openshift-4-6t658 env | grep APP
 
-$ oc new-app jenkins-persistent -p ENABLE_OAUTH=true -n pipeline-${GUID}-dev
+#Add an environment variable to set read from file path:
+oc set env dc/node-s2i-openshift READ_FROM_FILE=/data/configfile.txt
 
-# Enable the Jenkins service account to manage resources in the pipeline-${GUID}-test and pipeline-${GUID}-prod projects:
-$ oc policy add-role-to-user edit system:serviceaccount:pipeline-${GUID}-dev:jenkins -n pipeline-${GUID}-test
-$ oc policy add-role-to-user edit system:serviceaccount:pipeline-${GUID}-dev:jenkins -n pipeline-${GUID}-prod
+#Create config file:
+echo "This is a very important Config File" > configfile.txt
 
-# Enable pulling of images from the pipeline-${GUID}-dev project to the pipeline-${GUID}-test and pipeline-${GUID}-prod projects:
-$ oc policy add-role-to-group system:image-puller system:serviceaccounts:pipeline-${GUID}-test -n pipeline-${GUID}-dev
-$ oc policy add-role-to-group system:image-puller system:serviceaccounts:pipeline-${GUID}-prod -n pipeline-${GUID}-dev
+#Create config map from file:
+oc create configmap node-s2i-openshift-config-file --from-file=configfile.txt
 
-# Deploy the "Cat of The Day" (cotd) application in the pipeline-${GUID}-dev project:
-$ oc new-app nodejs~https://github.com/svennam92/node-s2i-openshift -n pipeline-${GUID}-dev
+#Add a config map volume to the application:
+oc set volume dc/node-s2i-openshift --add --overwrite --name=config-volume -m /data/ -t configmap --configmap-name=node-s2i-openshift-config-file
 
-# Watch the build logs until the build is complete:
-$ oc logs -f build/node-s2i-openshift-1 -n pipeline-${GUID}-dev
-
-# Verify that the build completed and tag the image:
-$ oc tag node-s2i-openshift:latest node-s2i-openshift:testready -n pipeline-${GUID}-dev
-$ oc tag node-s2i-openshift:testready node-s2i-openshift:prodready -n pipeline-${GUID}-dev
-
-# Examine the image stream to verify that the tags were created:
-$ oc describe is node-s2i-openshift -n pipeline-${GUID}-dev
-
-# Deploy the node-s2i-openshift application in the pipeline-${GUID}-test and pipeline-${GUID}-prod projects:
-$ oc new-app pipeline-${GUID}-dev/node-s2i-openshift:testready --name=node-s2i-openshift -n pipeline-${GUID}-test
-$ oc new-app pipeline-${GUID}-dev/node-s2i-openshift:prodready --name=node-s2i-openshift -n pipeline-${GUID}-prod
-
-# Create routes for all three of the applications:
-$ oc expose service node-s2i-openshift -n pipeline-${GUID}-dev
-$ oc expose service node-s2i-openshift -n pipeline-${GUID}-test
-$ oc expose service node-s2i-openshift -n pipeline-${GUID}-prod
-
-# Disable automatic deployment for all of the deployment configurations in your demonstration:
-$ oc get dc cotd2 -o yaml -n pipeline-${GUID}-dev | sed 's/automatic: true/automatic: false/g' | oc replace -f -
-$ oc get dc cotd2 -o yaml -n pipeline-${GUID}-test | sed 's/automatic: true/automatic: false/g' | oc replace -f -
-$ oc get dc cotd2 -o yaml -n pipeline-${GUID}-prod | sed 's/automatic: true/automatic: false/g' | oc replace -f -
+#Log into pod and verify the config map volume:
+oc get po | grep Running | awk '{print $1}'
+oc rsh node-s2i-openshift-6-b69f2
+cat $READ_FROM_FILE
+exit
 
 
 
+#Part 2. Creating an application, configuring it with environment variables, secrets and volumes
+
+#Create a credentials secret:
+echo 'r3dh4t1!' > ./password.txt
+echo 'admin' > ./user.txt
+oc create secret generic node-s2i-openshift-secret --from-file=app_user=user.txt --from-file=app_password=password.txt
+
+#Validate and decode secret:
+oc describe secrets node-s2i-openshift-secret | grep app_
+oc get secret node-s2i-openshift-secret -o yaml | grep app_
+echo <string> | base64 -d (for username)
+echo <string> | base64 -d (for password)
+
+#Add environment variable to application with secret:
+oc set env dc/node-s2i-openshift --from=secret/node-s2i-openshift-secret
+oc set env dc/node-s2i-openshift --from=secret/node-s2i-openshift-secret --prefix=MYSQL_
+
+#Examine application, look for newly added environment variables:
+oc set env dc/node-s2i-openshift --list
+
+#Create database credentials secret:
+echo 'r3dh4t1!' > ./dbpassword.txt
+echo 'admin' > ./dbuser.txt
+echo 'http://postgresql:5432' > ./dburl.txt
+oc create secret generic node-s2i-openshift-db-secret --from-file=app_db_user=user.txt --from-file=app_db_password=password.txt --from-file=app_db_url=dburl.txt
+
+#Mount secret as a secret volume in application:
+oc set volume dc/node-s2i-openshift --add --overwrite --name=db-config-volume -m /dbconfig/ --secret-name=node-s2i-openshift-db-secret
+
+#Add database URL environment variable with the secret volume:
+oc set env dc/node-s2i-openshift READ_FROM_FILE=/dbconfig/app_db_url
+
+#Grab the new pod name for the application:
+oc get po | grep Running | awk '{print $1}'
+
+#Verify the secret volume mount on the application pod:
+oc rsh <pod_name>
+cat $READ_FROM_FILE
+exit
 
 
+
+#Part 3. Creating a persistent application, configuring it with config maps and persistent volume
+
+#Create a new project for the gogs application:
+oc new-project $$-gogs --display-name "Shared Gogs"
+
+#Create a postgresql database for the gogs application:
+oc new-app postgresql-persistent --param POSTGRESQL_DATABASE=gogs --param POSTGRESQL_USER=gogs --param POSTGRESQL_PASSWORD=gogs --param VOLUME_CAPACITY=4Gi -lapp=postgresql_gogs
+
+#Create gogs application:
+oc new-app quay.io/gpte-devops-automation/gogs:11.91 -lapp=gogs
+
+#Create a 4GB persistent volume claim and connect it to /data on gogs application:
+oc set volume dc/gogs --add --overwrite --name=gogs-volume-1 --type persistentVolumeClaim --claim-size=4G --claim-name=gogs-data
+
+#Expose the service as a route:
+oc expose svc gogs
+oc get route gogs
+
+#Verify pods are up:
+oc get pod | grep Running
+
+#Examine the generated app.ini file:
+oc exec $(oc get pod | grep "^gogs" | grep Running | awk '{print $1}') -- cat /opt/gogs/custom/conf/app.ini
+
+#Copy the app.ini file to your local home directory:
+oc cp $(oc get pod | grep "^gogs" | grep Running | awk '{print $1}'):opt/gogs/custom/conf/app.ini $HOME/app.ini
+
+#Create config map with the app.ini file and mount it as a volume into the pod:
+oc create configmap gogs --from-file=app.ini
+oc set volume dc/gogs --add --overwrite --name=config-volume -m /opt/gogs/custom/conf/ -t configmap --configmap-name=gogs
+
+#Verify pod redeployment completed:
+oc get pod | grep Running
+
+#Delete projects used in parts1, 2 and 3:
+oc delete project $$-env
+oc delete project $$-gogs
+
+
+
+#Part 4. Creating an application, configuring it with environment variables, volumes and downward API
+
+#Set up a new project and application:
+oc new-project $$-development
+
+#Create new application:
+oc new-app https://github.com/svennam92/node-s2i-openshift
+
+#Expose application:
+oc expose svc node-s2i-openshift
+
+#Retrieve exposed route:
+oc get route node-s2i-openshift -o jsonpath='{.spec.host}{"\n"}'
+
+#Add environment variables POD_NAME and POD_NAMESPACE to the application with downward API method
+oc edit dc node-s2i-openshift
+
+#Verify environment variables values:
+oc rsh $( oc get pod | grep node-s2i-openshift | grep Running | awk '{ print $1 }') env | grep POD
+
+#Add volumes and volume mounts to the application with downward API method
+oc edit dc node-s2i-openshift
+
+#Verify content of volumes:
+oc rsh $( oc get pod | grep node-s2i-openshift | grep Running | awk '{ print $1 }' ) cat /downward/pod_labels
+oc rsh $( oc get pod | grep node-s2i-openshift | grep Running | awk '{ print $1 }' ) cat /downward/pod_annotations
+
+#Delete project:
+oc delete project $$-development
