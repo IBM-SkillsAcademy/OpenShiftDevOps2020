@@ -14,7 +14,7 @@ oc set env dc/node-s2i-openshift APP_VAR_1=Value1 APP_VAR_2=Value2
 
 #5.Examine the application looking for newly injected environment variables:
 watch oc get pod
-oc rsh node-s2i-openshift-2-zttdt env | grep APP
+oc rsh <new podname> env | grep APP
 
 #6.Delete an environment variable from the application:
 oc set env dc/node-s2i-openshift APP_VAR_2-
@@ -59,9 +59,9 @@ oc create configmap node-s2i-openshift-config-file --from-file=configfile.txt
 oc set volume dc/node-s2i-openshift --add --overwrite --name=config-volume -m /data/ -t configmap --configmap-name=node-s2i-openshift-config-file
 
 #15.Log into pod and verify the config map volume:
-#a.Get new pod name:
 oc get po | grep Running | awk '{print $1}'
 oc rsh <pod name>
+cat $READ_FROM_FILE
 exit
 
 
@@ -170,7 +170,9 @@ oc expose svc node-s2i-openshift
 #4.Retrieve exposed route:
 oc get route node-s2i-openshift -o jsonpath='{.spec.host}{"\n"}'
 
-#5.Add environment variables POD_NAME and POD_NAMESPACE to the application with downward API method. When you run the “oc edit dc node-s2i-openshift” command, the dc config file will open for editing, add the following env under the container spec section (see screenshot for illustration) and save the file:
+#5.Add environment variables POD_NAME and POD_NAMESPACE to the application with downward API method:
+oc edit dc node-s2i-openshift
+
 env:
 - name: POD_NAME
   valueFrom:
@@ -178,14 +180,16 @@ env:
       fieldPath: metadata.name
 - name: POD_NAMESPACE
   valueFrom:
-    fieldRef:po
+    fieldRef:
       fieldPath: metadata.namespace
 
 #6.Verify environment variables values:
 oc rsh $( oc get pod | grep node-s2i-openshift | grep Running | awk '{ print $1 }') env | grep POD
 
 #7.Add volumes and volume mounts to the application with downward API method:
-  volumeMounts:
+oc edit dc node-s2i-openshift
+
+volumeMounts:
   - name: podinfo
     mountPath: /downward
 
@@ -196,7 +200,7 @@ volumes:
     - path: "pod_labels"
       fieldRef:
         fieldPath: metadata.labels
-    - path: "pod_annoations"
+    - path: "pod_annotations"
       fieldRef:
         fieldPath: metadata.annotations
 
