@@ -185,19 +185,20 @@ env:
 oc rsh $( oc get pod | grep node-s2i-openshift | grep Running | awk '{ print $1 }') env | grep POD
 
 #7.Add volumes and volume mounts to the application with downward API method:
-  volumes:
+  volumeMounts:
   - name: podinfo
-    downwardAPI:
-      items:
-      - path: "pod_labels"
-        fieldRef:
-          fieldPath: metadata.labels
-      - path: "pod_annoations"
-        fieldRef:
-          fieldPath: metadata.annotations
-volumeMounts:
+    mountPath: /downward
+
+volumes:
 - name: podinfo
-  mountPath: /downward
+  downwardAPI:
+    items:
+    - path: "pod_labels"
+      fieldRef:
+        fieldPath: metadata.labels
+    - path: "pod_annoations"
+      fieldRef:
+        fieldPath: metadata.annotations
 
 #8.Verify content of volumes:
 oc rsh $( oc get pod | grep node-s2i-openshift | grep Running | awk '{ print $1 }' ) cat /downward/pod_labels
