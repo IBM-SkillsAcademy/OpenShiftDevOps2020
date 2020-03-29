@@ -1,4 +1,99 @@
-# This is a test command reference file for Exercise - 1 in the Red Hat OpenShift DevOps Engineer course 2020
-# This is a test line number 2
-# The OpenShift DevOps 2020 github repository is https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020.git
-# The Hello World git repo is https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020     /php-helloworld
+=====================================
+Part 1 
+=====================================
+docker run hello-world
+
+docker run -it centos:latest
+
+=====================================
+Part 2
+=====================================
+
+yum install vim
+
+vim
+
+:q
+
+exit
+
+docker run -it centos:latest
+
+vim
+
+
+
+mkdir docker-example
+cd docker-example
+nano Dockerfile
+
+
+FROM centos:latest
+RUN yum install vim -y && mkdir /vim
+WORKDIR /vim
+ENTRYPOINT ["vim"]
+
+
+docker build .
+
+docker images
+
+docker run -it <IMAGE ID>
+
+======================================
+Part 3
+======================================
+nano hello
+
+This is a test file HELLO WORLD [text written from OS]
+
+docker run -it -v ${PWD}:/vim <docker image> 
+
+:e hello 
+
+i 
+
+This line is written from Vim inside the container 
+
+:wq hello
+
+more hello
+
+======================================
+Part 4
+======================================
+ibmcloud login
+
+ibmcloud cr login 
+
+======================================
+Part 5
+======================================
+ibmcloud cr namespace-add ex1p5-XXX 
+
+docker tag <local_image> us.icr.io/<my_namespace>/<my_repo>
+
+docker push us.icr.io/<my_namespace>/<my_repo>
+
+
+======================================
+Part 6
+======================================
+
+docker run -v ${PWD}:/vim -it us.icr.io/ex1p5-abc/vimrepo 
+
+:e hello
+
+i
+
+This is a text from VIM deployed on IBM Cloud Registry 
+
+:wq hello
+
+
+
+
+
+
+
+
