@@ -15,3 +15,4 @@ Any references in this information to non-IBM websites are provided for convenie
 
 ##  Test file **blockchain.sh**
 
+##  Test - 3
