@@ -1,0 +1,4 @@
+#Part 1. Deploying an J2EE application with OpenShift web console
+
+#1. Open command line terminal 
+crc console
