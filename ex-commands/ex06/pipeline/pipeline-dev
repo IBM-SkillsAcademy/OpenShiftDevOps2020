@@ -1,0 +1,24 @@
+node {
+  stage('Build Employee Management') {
+    openshift.withCluster() {
+      openshift.withProject("my03-tasks") {
+        openshift.selector("bc", "employeemancicd").startBuild("--wait=true")
+      }
+    }
+  }
+  stage('Tag Image') {
+    echo 'Taging image'  
+    openshift.withCluster() {
+      openshift.withProject("my03-tasks") {
+        openshift.tag("employeemancicd:latest", "employeemancicd:${BUILD_NUMBER}")
+      }
+    }
+  }
+  stage('Deploy new image for Employee Management') {
+    openshift.withCluster() {
+      openshift.withProject("my03-tasks") {
+        openshift.selector("dc", "employeemancicd").rollout().latest();
+      }
+    }
+  }
+}
