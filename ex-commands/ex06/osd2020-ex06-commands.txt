@@ -42,3 +42,10 @@ Part 5
 =====================================
 
 oc delete project my03-tasks my03-cicd
+
+
+
+
+
+
+
