@@ -1,0 +1,44 @@
+=====================================
+Part 1 
+=====================================
+oc new-project my03-cicd --display-name="My CICD Project"
+
+oc new-app jenkins-ephemeral --param MEMORY_LIMIT=2Gi --param DISABLE_ADMINISTRATIVE_MONITORS=true --param ENABLE_OAUTH=true
+
+oc set resources dc jenkins --limits=cpu=2 --requests=cpu=1,memory=2Gi
+
+watch oc get pods
+
+oc get route jenkins -o jsonpath='{.spec.host}{"\n"}'
+
+=====================================
+Part 2
+=====================================
+
+oc new-project my03-tasks --display-name="My Tasks Project"
+
+oc new-app java:11~https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020 --context-dir=employeeman --name=employeemancicd
+
+oc expose svc/employeemancicd
+
+watch oc get pods
+
+oc get events
+
+oc get route employeemancicd -o jsonpath='{.spec.host}{"\n"}'
+
+oc set triggers dc employeemancicd --manual
+
+oc policy add-role-to-user edit system:serviceaccount:$GUID-cicd:jenkins -n $GUID-tasks
+
+=====================================
+Part 4
+=====================================
+
+oc get is | grep employeemancicd
+
+=====================================
+Part 5
+=====================================
+
+oc delete project my03-tasks my03-cicd
