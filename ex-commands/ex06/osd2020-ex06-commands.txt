@@ -29,7 +29,7 @@ oc get route employeemancicd -o jsonpath='{.spec.host}{"\n"}'
 
 oc set triggers dc employeemancicd --manual
 
-oc policy add-role-to-user edit system:serviceaccount:$GUID-cicd:jenkins -n $GUID-tasks
+oc policy add-role-to-user edit system:serviceaccount:my03-cicd:jenkins -n my03-tasks
 
 =====================================
 Part 4
