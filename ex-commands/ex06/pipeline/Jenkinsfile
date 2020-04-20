@@ -10,7 +10,7 @@ node {
     echo 'Taging image'  
     openshift.withCluster() {
       openshift.withProject("my03-tasks") {
-        openshift.tag("employeemancicd:latest", "employeemancicd:${BUILD_NUMBER}")
+        openshift.tag("employeemancicd:latest", "employeemancicd:v${BUILD_NUMBER}.0")
       }
     }
   }
