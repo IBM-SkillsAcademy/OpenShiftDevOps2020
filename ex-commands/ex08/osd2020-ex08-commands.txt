@@ -60,7 +60,7 @@ oc create serviceaccount logdna-agent -n ibm-observe
 
 oc adm policy add-scc-to-user privileged system:serviceaccount:ibm-observe:logdna-agent
 
-oc create secret generic logdna-agent-key --from-literal=logdna-agent-key=4dc416277f7b198733f9f14df98ff3fc -n ibm-observe
+oc create secret generic logdna-agent-key --from-literal=logdna-agent-key=<key value> -n ibm-observe
 
 oc create -f https://assets.us-south.logging.cloud.ibm.com/clients/logdna-agent-ds-os.yaml -n ibm-observe
 
