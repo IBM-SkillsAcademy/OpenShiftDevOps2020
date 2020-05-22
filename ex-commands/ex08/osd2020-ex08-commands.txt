@@ -1,0 +1,74 @@
+=====================================
+Part 1 
+=====================================
+oc new-project example-health
+
+oc new-app --name patient-ui https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020 --context-dir=node-s2i-openshift
+
+oc expose svc/patient-ui
+
+oc get route | grep patient-ui | awk '{print $2}'
+
+oc get all
+
+
+=====================================
+Part 2
+=====================================
+oc project example-health
+
+route=$(oc get route | grep patient-ui | awk '{print $2}')
+while sleep 1; do curl -s http://$route/info; done
+
+pod=$(oc get pod | grep Running | awk '{print $1}')
+oc logs -f $pod
+
+oc get events
+
+
+=====================================
+Part 4
+=====================================
+oc get event | grep replicationcontroller
+
+oc autoscale --min=1 --max=10 --cpu-percent=1 dc/patient-ui
+
+route=$(oc get route | grep patient-ui | awk '{print $2}')
+while sleep 1; do curl -s http://$route/info; done
+
+watch oc get po
+
+oc get events | grep -i scaled
+
+oc get events | grep -i scaled
+
+
+=====================================
+Part 5
+=====================================
+oc project example-health
+
+oc new-app --name=patient-db centos/nodejs-10-centos7~https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020.git --context-dir nodejs-patientdb-cloudant
+
+
+=====================================
+Part 6
+=====================================
+oc new-project ibm-observe
+
+oc create serviceaccount logdna-agent -n ibm-observe
+
+oc adm policy add-scc-to-user privileged system:serviceaccount:ibm-observe:logdna-agent
+
+oc create secret generic logdna-agent-key --from-literal=logdna-agent-key=<key value> -n ibm-observe
+
+oc create -f https://assets.us-south.logging.cloud.ibm.com/clients/logdna-agent-ds-os.yaml -n ibm-observe
+
+oc get all -n ibm-observe
+
+=====================================
+Part 7
+=====================================
+curl -sL https://ibm.biz/install-sysdig-k8s-agent | bash -s -- -a d6c21492-de9e-446e-8494-6db415c6ec53 -c ingest.eu-de.monitoring.cloud.ibm.com -ac 'sysdig_capture_enabled: false' –openshift
+
+oc get all -n ibm-observe -l app=sysdig-agent

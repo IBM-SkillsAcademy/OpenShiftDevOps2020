@@ -1,28 +1,20 @@
-#Part 1. Creating an application, configuring it with environment variables, config maps and volumes
+#Part 1
 
-#1.Create a new project:
 oc new-project $$-env
 
-#2.Create a new application:
-oc new-app https://github.com/svennam92/node-s2i-openshift
+oc new-app https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020 --context-dir=node-s2i-openshift --name=node-s2i-openshift
 
-#3.Expose the application service:
 oc expose svc node-s2i-openshift
 
-#4.Update the application by directly injecting environment variables:
 oc set env dc/node-s2i-openshift APP_VAR_1=Value1 APP_VAR_2=Value2
 
-#5.Examine the application looking for newly injected environment variables:
 watch oc get pod
 oc rsh <new podname> env | grep APP
 
-#6.Delete an environment variable from the application:
 oc set env dc/node-s2i-openshift APP_VAR_2-
 
-#7.Create a config map:
 oc create configmap node-s2i-openshift-config --from-literal=APP_VAR_3=Value3 --from-literal=APP_VAR_4=Value4
 
-#8.Add environment variables APP_VAR_3 and APP_VAR_4 to the application with config maps
 oc edit dc node-s2i-openshift
     spec:
       containers:
@@ -40,139 +32,95 @@ oc edit dc node-s2i-openshift
               key: APP_VAR_4
               name: node-s2i-openshift-config
 
-#9.Get the newly created pod name:
 oc get po | grep Running | awk '{print $1}'
 
-#10.Run the env command on the new pod and look for the newly added variables
 oc rsh node-s2i-openshift-4-6t658 env | grep APP
 
-#11.Add an environment variable to set read from file path:
 oc set env dc/node-s2i-openshift READ_FROM_FILE=/data/configfile.txt
 
-#12.Create config file:
 echo "This is a very important Config File" > configfile.txt
 
-#13.Create config map from file:
 oc create configmap node-s2i-openshift-config-file --from-file=configfile.txt
 
-#14.Add a config map volume to the application:
 oc set volume dc/node-s2i-openshift --add --overwrite --name=config-volume -m /data/ -t configmap --configmap-name=node-s2i-openshift-config-file
 
-#15.Log into pod and verify the config map volume:
 oc get po | grep Running | awk '{print $1}'
 oc rsh <pod name>
 cat $READ_FROM_FILE
 exit
 
 
+#Part 2
 
-#Part 2. Creating an application, configuring it with environment variables, secrets and volumes
-
-#1.Create a credentials secret:
 echo 'r3dh4t1!' > ./password.txt
 echo 'admin' > ./user.txt
 oc create secret generic node-s2i-openshift-secret --from-file=app_user=user.txt --from-file=app_password=password.txt
 
-#2.Validate and decode secret:
 oc describe secrets node-s2i-openshift-secret | grep app_
 oc get secret node-s2i-openshift-secret -o yaml | grep app_
 echo <encoded username> | base64 -d
 echo <encoded password> | base64 -d
 
-#3.Add environment variable to application with secret:
 oc set env dc/node-s2i-openshift --from=secret/node-s2i-openshift-secret
 oc set env dc/node-s2i-openshift --from=secret/node-s2i-openshift-secret --prefix=MYSQL_
 
-#4.Examine application and look for newly added environment variables:
 oc set env dc/node-s2i-openshift --list
 
-#5.Create database credentials secret:
 echo 'r3dh4t1!' > ./dbpassword.txt
 echo 'admin' > ./dbuser.txt
 echo 'http://postgresql:5432' > ./dburl.txt
 oc create secret generic node-s2i-openshift-db-secret --from-file=app_db_user=user.txt --from-file=app_db_password=password.txt --from-file=app_db_url=dburl.txt
 
-#6.Mount secret as a secret volume:
 oc set volume dc/node-s2i-openshift --add --overwrite --name=db-config-volume -m /dbconfig/ --secret-name=node-s2i-openshift-db-secret
 
-#7.Add database URL environment variable with the secret volume:
 oc set env dc/node-s2i-openshift READ_FROM_FILE=/dbconfig/app_db_url
 
-#8.Grab the new pod name for the application:
 oc get po | grep Running | awk '{print $1}'
 
-#9.Verify the secret volume mount on the application pod:
 oc rsh <new podname>
 cat $READ_FROM_FILE
 exit
 
 
+#Part 3
 
-#Part 3. Creating a persistent application, configuring it with config maps and persistent volume
-
-#1.Create a new project for the gogs application:
 oc new-project $$-gogs --display-name "Shared Gogs"
 
-#2.Create a postgresql database for the gogs application:
 oc new-app postgresql-persistent --param POSTGRESQL_DATABASE=gogs --param POSTGRESQL_USER=gogs --param POSTGRESQL_PASSWORD=gogs --param VOLUME_CAPACITY=4Gi -lapp=postgresql_gogs
 
-#3.Create gogs application:
 oc new-app quay.io/gpte-devops-automation/gogs:11.91 -lapp=gogs
 
-#4.Create a 4GB persistent volume claim and connect it to /data on gogs application:
 oc set volume dc/gogs --add --overwrite --name=gogs-volume-1 --type persistentVolumeClaim --claim-size=4G --claim-name=gogs-data
 
-#5.Expose the service as a route:
 oc expose svc gogs
 oc get route gogs
 
-#6.Verify pods are up:
 oc get pod | grep Running
 
-#7.Navigate to the route path with a browser
- 
-#8.Configure and install gogs application
-
-#9.Examine the generated app.ini file:
 oc exec $(oc get pod | grep "^gogs" | grep Running | awk '{print $1}') -- cat /opt/gogs/custom/conf/app.ini
 
-#10.Copy the app.ini file to your local home directory:
 oc cp $(oc get pod | grep "^gogs" | grep Running | awk '{print $1}'):opt/gogs/custom/conf/app.ini $HOME/app.ini
 
-#11.Create config map with the app.ini file and mount it as a volume into the pod:
 oc create configmap gogs --from-file=app.ini
 oc set volume dc/gogs --add --overwrite --name=config-volume -m /opt/gogs/custom/conf/ -t configmap --configmap-name=gogs
 
-#12.Verify pod redeployment completed:
 oc get pod | grep Running
 
-#13.Register an account
- 
-#14.Log into Gogs
-
-#15.Delete projects used in parts1, 2 and 3:
 oc delete project $$-env
 oc delete project $$-gogs
 
 
+#Part 4
 
-#Part 4. Creating an application, configuring it with environment variables, volumes and downward API
-
-#1.Set up a new project and application:
 oc new-project $$-development
 
-#2.Create new application:
-oc new-app https://github.com/svennam92/node-s2i-openshift
+oc new-app https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020 --context-dir=node-s2i-openshift --name=node-s2i-openshift
 
-#3.Expose application:
 oc expose svc node-s2i-openshift
 
-#4.Retrieve exposed route:
 oc get route node-s2i-openshift -o jsonpath='{.spec.host}{"\n"}'
 
-#5.Add environment variables POD_NAME and POD_NAMESPACE to the application with downward API method:
 oc edit dc node-s2i-openshift
-
 env:
 - name: POD_NAME
   valueFrom:
@@ -183,10 +131,8 @@ env:
     fieldRef:
       fieldPath: metadata.namespace
 
-#6.Verify environment variables values:
 oc rsh $( oc get pod | grep node-s2i-openshift | grep Running | awk '{ print $1 }') env | grep POD
 
-#7.Add volumes and volume mounts to the application with downward API method:
 oc edit dc node-s2i-openshift
 
 volumeMounts:
@@ -204,9 +150,7 @@ volumes:
       fieldRef:
         fieldPath: metadata.annotations
 
-#8.Verify content of volumes:
 oc rsh $( oc get pod | grep node-s2i-openshift | grep Running | awk '{ print $1 }' ) cat /downward/pod_labels
 oc rsh $( oc get pod | grep node-s2i-openshift | grep Running | awk '{ print $1 }' ) cat /downward/pod_annotations
 
-#9.Delete project:
 oc delete project $$-development

@@ -1,0 +1,89 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+  labels:
+    app: node-s2i-openshift
+  name: node-s2i-openshift
+  namespace: development
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    app: node-s2i-openshift
+    deploymentconfig: node-s2i-openshift
+  strategy:
+    activeDeadlineSeconds: 21600
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:
+    metadata:
+      annotations:
+        openshift.io/generated-by: OpenShiftNewApp
+      creationTimestamp: null
+      labels:
+        app: node-s2i-openshift
+        deploymentconfig: node-s2i-openshift
+    spec:
+      containers:
+      - env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        image: image-registry.openshift-image-registry.svc:5000/development/node-s2i-openshift@sha256:00d7b8c3e0b3c68d2f5e7e87822e4474ef9dcfb62dad0bc5520a8b96afbd8fe3
+        imagePullPolicy: Always
+        name: node-s2i-openshift
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /downward
+          name: podinfo
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - downwardAPI:
+          defaultMode: 420
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.labels
+            path: pod_labels
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.annotations
+            path: pod_annotations
+        name: podinfo
+  test: false
+  triggers:
+  - type: ConfigChange
+  - imageChangeParams:
+      automatic: true
+      containerNames:
+      - node-s2i-openshift
+      from:
+        kind: ImageStreamTag
+        name: node-s2i-openshift:latest
+        namespace: development
+      lastTriggeredImage: image-registry.openshift-image-registry.svc:5000/development/node-s2i-openshift@sha256:00d7b8c3e0b3c68d2f5e7e87822e4474ef9dcfb62dad0bc5520a8b96afbd8fe3
+    type: ImageChange
