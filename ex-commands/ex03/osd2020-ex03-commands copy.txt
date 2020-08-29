@@ -1,1 +1,0 @@
-# This is a test command reference file for Exercise - 3 in the Red Hat OpenShift DevOps Engineer course 2020

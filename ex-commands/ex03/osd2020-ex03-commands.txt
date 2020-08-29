@@ -1,1 +1,106 @@
-# This is a test command reference file for Exercise - 3 in the Red Hat OpenShift DevOps Engineer course 2020
+======================================
+Part 1: Deploying the guestbook application
+======================================
+*
+* Follow the exercise guide and perform the steps 1 and 2 in browser
+*
+
+3.  Login to IBM Cloud
+ibmcloud login
+
+4.  Run the following command to connect to the cluster that you created in Exercise 2:
+ibmcloud ks cluster config --cluster mycluster
+
+5.  Glone the git repo, and change directory.
+git clone https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020
+cd OpenShiftDevOps2020/guestbook/
+
+6.  Configure the Redis master deployment file:
+kubectl create -f redis-master-deployment.yaml
+
+7.	Configure the Redis master service file:
+kubectl create -f redis-master-service.yaml
+
+8.	Configure the Redis slave deployment file:
+kubectl create -f redis-slave-deployment.yaml
+
+9.	Configure the Redis slave service file:
+kubectl create -f redis-slave-service.yaml
+
+10. Configure the guestbook deployment file:
+kubectl create -f guestbook-deployment.yaml
+
+11. Configure the guestbook service file:
+kubectl create -f guestbook-service.yaml
+
+
+======================================
+Part 2: Exploring the pod network
+======================================
+
+1.  Examine the pods that were created
+kubectl get pods -o wide
+
+2.  observe how the pod network operates
+kubectl exec -it <Name> -- traceroute	<IP>
+
+
+======================================
+Part 3: Exploring the publishing services (ServiceTypes)
+======================================
+
+1.  View details about the Redis master service:
+kubectl describe service redis-master
+
+2.  View details about the Redis slave service:
+kubectl describe service redis-slave
+
+3.  View details about the Redis guestbook service:
+kubectl describe service guestbook
+
+4.  Examine public IP in the cluster:
+ibmcloud ks workers --cluster mycluster
+
+Test the application, use <Public IP>:<NodePort> in your browser.
+
+
+======================================
+Part 4: Exploring the network policies
+======================================
+
+1.	Examine IP addresses in the pods:
+kubectl get pods -o wide
+
+2.  Verify the redis servers are open to any pod. 
+kubectl run -i --tty --rm busybox --image=busybox -- sh
+
+3.  Test the connection by running the following command:
+nc -v -z <Redis IP> 6379
+
+4.  Exit the BusyBox:
+exit
+
+5.	Examine guest-network-policy.yaml file:
+more guestbook-network-policy.yaml
+
+6.	Create a network policy to restrict access to the redis servers to the guestbook application:
+kubectl create -f guestbook-network-policy.yaml
+
+8.  Run the following command: 
+nc -v -z <Redis IP> 6379
+exit
+
+
+======================================
+Part 5: Cleaning up the environment
+======================================
+
+1.	Delete all the services:
+kubectl delete service --all
+
+2.  Delete all the deployments:
+kubectl delete deployments --all
+
+*
+* Follow the exercise guide and perform the steps 4 in browser
+*
