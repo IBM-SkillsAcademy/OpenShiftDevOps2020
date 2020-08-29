@@ -1,12 +1,12 @@
 =====================================
-Part 1 
+Part 1 Running your first Docker command
 =====================================
 docker run hello-world
 
 docker run -it centos:latest
 
 =====================================
-Part 2
+Part 2 Building your first Dockerfile
 =====================================
 
 yum install vim
@@ -21,7 +21,7 @@ docker run -it centos:latest
 
 vim
 
-
+exit
 
 mkdir docker-example
 cd docker-example
@@ -43,31 +43,31 @@ docker run -it <IMAGE ID>
 ======================================
 Part 3
 ======================================
-nano hello
+nano hello.txt
 
 This is a test file HELLO WORLD [text written from OS]
 
 docker run -it -v ${PWD}:/vim <docker image> 
 
-:e hello 
+:e hello.txt
 
 i 
 
 This line is written from Vim inside the container 
 
-:wq hello
+<esc>:wq hello.txt
 
-more hello
+more hello.txt
 
 ======================================
-Part 4
+Part 4 Logging in to your IBM Cloud account
 ======================================
 ibmcloud login
 
 ibmcloud cr login 
 
 ======================================
-Part 5
+Part 5 Creating a container and publishing it on IBM Cloud Container Registry
 ======================================
 ibmcloud cr namespace-add ex1p5-XXX 
 
@@ -77,23 +77,30 @@ docker push us.icr.io/<my_namespace>/<my_repo>
 
 
 ======================================
-Part 6
+Part 6 Testing the deployed image
 ======================================
 
 docker run -v ${PWD}:/vim -it us.icr.io/ex1p5-abc/vimrepo 
 
-:e hello
+:e hello.txt
 
 i
 
 This is a text from VIM deployed on IBM Cloud Registry 
 
-:wq hello
+<esc>:wq hello.txt
 
 
+======================================
+Part 7 Cleaning up the environment
+======================================
 
+docker ps -a
 
+docker rm <containerID>
 
+docker images
 
+docker rmi <imageId>:<tag>
 
-
+ibmcloud cr namespace-rm <namespace-name>
