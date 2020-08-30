@@ -1,1 +1,74 @@
-# This is a test command reference file for Exercise - 4 in the Red Hat OpenShift DevOps Engineer course 2020
+======================================
+Part 1: Accessing and navigating the Red Hat OpenShift web console
+======================================
+*
+* Follow the exercise guide and perform the steps in browser
+*
+
+======================================
+Part 2: Deploying an application from the service catalog
+======================================
+*
+* Follow the exercise guide and perform the steps 1 - 7 in browser
+*
+
+Step 8. In the Create Source-to-Image Application window, set the Git Repo URL to 
+“https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020”. 
+Expand Show Advanced Git Options and set the context directory to 
+“/php-helloworld”. 
+Change the Application Name and Name to 
+“php-helloworld”. 
+Change the resources from Deployment to Deployment Config. Click Create.
+
+Continue step 9 and 10 in browser
+
+======================================
+Part 3: Reviewing application objects
+======================================
+*
+* Follow the exercise guide and perform the steps in browser
+*
+
+======================================
+Part 4: Setting resource quotas and scaling an application
+======================================
+
+1.	In the navigation bar, click Workloads > Deployment Configs. 
+Click the php-helloworld deployment configuration and then click the YAML tab. 
+Go down to resources under the containers spec, remove the curly brackets, and add two lines for requests and memory: 256Mi (see the following example),
+
+resources:
+    requests:
+        memory: 250Mi
+
+ and then click Save.
+
+*
+* Follow the exercise guide and perform the steps 3 - 6 in browser
+*
+
+======================================
+Part 5: Deploying an application from a template
+======================================
+*
+* Follow the exercise guide and perform the steps 1 - 4 in browser
+*
+
+5.  Change the Name to nodejs-mongodb1, 
+Database Service Name to mongodb1, 
+and Database Name to sampledb1, 
+and then click Create.
+
+======================================
+Part 6:	Exploring logging and monitoring
+======================================
+*
+* Follow the exercise guide and perform the steps in browser
+*
+
+======================================
+Part 7:	Cleaning up environment
+======================================
+*
+* Follow the exercise guide and perform the steps in browser
+*
