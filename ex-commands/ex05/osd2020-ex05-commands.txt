@@ -1,26 +1,38 @@
-#Part 1
+======================================
+Part 1: Configuring an application with the environment variables ConfigMap and Volumes
+======================================
 
-oc new-project $$-env
+1.	Access your Red Hat OpenShift cluster.
 
+2.  Create a project 
+oc new-project env
+
+3.  Create an application 
 oc new-app https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020 --context-dir=node-s2i-openshift --name=node-s2i-openshift
-
+ 
+4.  Expose the application 
 oc expose svc node-s2i-openshift
 
+5.  Update the application 
 oc set env dc/node-s2i-openshift APP_VAR_1=Value1 APP_VAR_2=Value2
 
+6a.  Examine the application by looking
 watch oc get pod
-oc rsh <new podname> env | grep APP
 
+6b. Ctrl+C 
+
+6c. oc rsh node-s2i-openshift-2<pod suffix> env | grep APP
+
+7.  Delete an environment variable 
 oc set env dc/node-s2i-openshift APP_VAR_2-
 
+8.  Create a ConfigMap 
 oc create configmap node-s2i-openshift-config --from-literal=APP_VAR_3=Value3 --from-literal=APP_VAR_4=Value4
 
-oc edit dc node-s2i-openshift
-    spec:
-      containers:
-      - env:
-        - name: APP_VAR_1
-          value: Value1
+9.  Add environment variables APP_VAR_3 and APP_VAR_4 to the application by using ConfigMap
+oc edit dc node-s2i-openshift 
+▪	Press i to start editing, Add the folloeing two sections 
+
         - name: APP_VAR_3
           valueFrom:
             configMapKeyRef:
@@ -32,125 +44,199 @@ oc edit dc node-s2i-openshift
               key: APP_VAR_4
               name: node-s2i-openshift-config
 
+▪	Press Esc and :wq to save changes.
+
+10. Get the newly created pod name by running the following command:
 oc get po | grep Running | awk '{print $1}'
 
+11. Examine the newly added variables
 oc rsh node-s2i-openshift-4-6t658 env | grep APP
 
+12. Add an environment variable to set read from file path by running the following command:
 oc set env dc/node-s2i-openshift READ_FROM_FILE=/data/configfile.txt
 
+13. Create config file by running the following command:
 echo "This is a very important Config File" > configfile.txt
 
+14. Create ConfigMap from file by running the following command:
 oc create configmap node-s2i-openshift-config-file --from-file=configfile.txt
 
+15. Add a ConfigMap Volume to the application by running the following command:
 oc set volume dc/node-s2i-openshift --add --overwrite --name=config-volume -m /data/ -t configmap --configmap-name=node-s2i-openshift-config-file
 
+16. Log into pod and verify the ConfigMap Volume:
+__ a.	Get new pod name by running the following command:
 oc get po | grep Running | awk '{print $1}'
-oc rsh <pod name>
+
+__ b.	Log into pod by running the following command:
+oc rsh node-s2i-openshift-6-b69f2
+
+__ c.	Display the content of the file path stored in the READ_FROM_FILE environment variable by running the following command:
 cat $READ_FROM_FILE
+
+__ d.	Exit the pod by running the following command:
 exit
 
+======================================
+Part 2: Configuring an application with environment variables, Secrets and Volumes
+======================================
 
-#Part 2
-
+1.  Create a credentials Secret by running the following commands:
 echo 'r3dh4t1!' > ./password.txt
 echo 'admin' > ./user.txt
 oc create secret generic node-s2i-openshift-secret --from-file=app_user=user.txt --from-file=app_password=password.txt
 
+2.  Validate and decode Secret by running the following commands:
 oc describe secrets node-s2i-openshift-secret | grep app_
 oc get secret node-s2i-openshift-secret -o yaml | grep app_
-echo <encoded username> | base64 -d
-echo <encoded password> | base64 -d
+echo cjNkaDR0MSEK | base64 -d 
+echo YWRtaW4K | base64 -d 
 
+3.  Add environment variable to application with Secret by running the following commands:
 oc set env dc/node-s2i-openshift --from=secret/node-s2i-openshift-secret
-oc set env dc/node-s2i-openshift --from=secret/node-s2i-openshift-secret --prefix=MYSQL_
 
+4.  Examine application and look for newly added environment variables by running the following command:
 oc set env dc/node-s2i-openshift --list
 
+5.  Create database credentials Secret by running the following commands:
 echo 'r3dh4t1!' > ./dbpassword.txt
 echo 'admin' > ./dbuser.txt
 echo 'http://postgresql:5432' > ./dburl.txt
 oc create secret generic node-s2i-openshift-db-secret --from-file=app_db_user=user.txt --from-file=app_db_password=password.txt --from-file=app_db_url=dburl.txt
 
+6.  Mount Secret as a Secret Volume by running the following command:
 oc set volume dc/node-s2i-openshift --add --overwrite --name=db-config-volume -m /dbconfig/ --secret-name=node-s2i-openshift-db-secret
 
+7.	Add database URL environment variable with the Secret Volume by running the following command:
 oc set env dc/node-s2i-openshift READ_FROM_FILE=/dbconfig/app_db_url
 
+8.	Grab the new pod name for the application by running the following command:
 oc get po | grep Running | awk '{print $1}'
 
-oc rsh <new podname>
+9.	Verify the Secret Volume mount on the application pod by running the following commands:
+oc rsh node-s2i-openshift<Pod suffix>
 cat $READ_FROM_FILE
 exit
+======================================
+Part 3. Configuring a persistent application with ConfigMaps and Persistent Volume
+======================================
 
+1.	Create a new project for the gogs application by running the following command:
+oc new-project gogs --display-name "Shared Gogs"
 
-#Part 3
-
-oc new-project $$-gogs --display-name "Shared Gogs"
-
+2.	Create a postgresql database for the gogs application by running the following command:
 oc new-app postgresql-persistent --param POSTGRESQL_DATABASE=gogs --param POSTGRESQL_USER=gogs --param POSTGRESQL_PASSWORD=gogs --param VOLUME_CAPACITY=4Gi -lapp=postgresql_gogs
 
+3.	Create gogs application by running the following command:
 oc new-app quay.io/gpte-devops-automation/gogs:11.91 -lapp=gogs
 
+4.	Create a 4GB Persistent Volume Claim and connect it to /data on gogs application by running the following command:
 oc set volume dc/gogs --add --overwrite --name=gogs-volume-1 --type persistentVolumeClaim --claim-size=4G --claim-name=gogs-data
 
+5.	Expose the service as a route by running the following commands:
 oc expose svc gogs
-oc get route gogs
 
+6.	Verify pods are up by running the following command:
 oc get pod | grep Running
 
+7.	Navigate to the route path with a browser, use route path from previous command :
+ 
+8.	Configure and install gogs application by entering the following information in the respective fields:
+__ a.	Database Type: PostgreSQL
+__ b.	Host: postgresql:5432
+__ c.	User: gogs
+__ d.	Password: gogs
+__ e.	Database Name: gogs
+__ f.	Run User: gogs
+__ g.	Application URL: http://<route_path>
+__ h.	Click on “Install Gogs”
+
+Examine the generated app.ini file by running the following command:
 oc exec $(oc get pod | grep "^gogs" | grep Running | awk '{print $1}') -- cat /opt/gogs/custom/conf/app.ini
 
+9.	Copy the app.ini file to your local home directory by running the following command:
 oc cp $(oc get pod | grep "^gogs" | grep Running | awk '{print $1}'):opt/gogs/custom/conf/app.ini $HOME/app.ini
 
+10.	Create ConfigMap with the app.ini file and mount it as a Volume into the pod by running the following commands:
 oc create configmap gogs --from-file=app.ini
 oc set volume dc/gogs --add --overwrite --name=config-volume -m /opt/gogs/custom/conf/ -t configmap --configmap-name=gogs
 
+
+11.	Verify pod redeployment completed by running the following command:
 oc get pod | grep Running
 
-oc delete project $$-env
-oc delete project $$-gogs
+12.	Register an account:
+ 
+13.	Log into Gogs:
+ 
+14.	Delete projects used in parts1, 2 and 3 by running the following commands:
+oc delete project env
+oc delete project gogs
 
+======================================
+Part 4. Configuring an application with environment variables, Volumes and Downward API
+======================================
+1.	Set up a new project and application by running the following command:
+oc new-project development
 
-#Part 4
-
-oc new-project $$-development
-
+2.	Create an application by running the following command:
 oc new-app https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020 --context-dir=node-s2i-openshift --name=node-s2i-openshift
 
+3.	Expose the application by running the following command:
 oc expose svc node-s2i-openshift
 
+4.	Retrieve the exposed route by running the following command:
 oc get route node-s2i-openshift -o jsonpath='{.spec.host}{"\n"}'
 
+5.	Add the environment variables POD_NAME and POD_NAMESPACE to the application by using the downward API method.
 oc edit dc node-s2i-openshift
+Here is the syntax to add to the dc file:
+
 env:
-- name: POD_NAME
+-	name: POD_NAME 
   valueFrom:
-    fieldRef:
-      fieldPath: metadata.name
-- name: POD_NAMESPACE
-  valueFrom:
-    fieldRef:
-      fieldPath: metadata.namespace
+  fieldRef: 
+    apiVersion: v1
+    fieldPath: metadata.name
+-	name: POD_NAMESPACE
+  valueFrom: fieldRef:
+  apiVersion: v1
+  fieldPath: metadata.namespace
 
-oc rsh $( oc get pod | grep node-s2i-openshift | grep Running | awk '{ print $1 }') env | grep POD
+▪	Press Esc then :wq to save changes and close the file.
 
+6.	Verify the environment variables values by running the following command:
+oc rsh $( oc get pod | grep node-s2i-openshift | grep Running | awk '{ print$1 }') env | grep POD
+ 
+7.	Add Volumes and volumeMounts to the application by using the downward API method.
 oc edit dc node-s2i-openshift
-
+▪	Press i to be able to edit the file.
+▪	Add the following two sections  
+▪	volumeMounts goes under the container spec section, 
+▪	Volumes goes under the spec section 
+ 
 volumeMounts:
-  - name: podinfo
-    mountPath: /downward
+-	name: podinfo 
+  mountPath: /downward
 
 volumes:
-- name: podinfo
-  downwardAPI:
-    items:
-    - path: "pod_labels"
-      fieldRef:
-        fieldPath: metadata.labels
-    - path: "pod_annotations"
-      fieldRef:
-        fieldPath: metadata.annotations
+  -	name: podinfo 
+    downwardAPI: 
+      items:
+      -	path: pod_labels 
+        fieldRef:
+          apiVersion: v1
+          fieldPath: metadata.labels
+      -	path: pod_annotations 
+        fieldRef:
+          apiVersion: v1
+          fieldPath: metadata.annotations
 
-oc rsh $( oc get pod | grep node-s2i-openshift | grep Running | awk '{ print $1 }' ) cat /downward/pod_labels
-oc rsh $( oc get pod | grep node-s2i-openshift | grep Running | awk '{ print $1 }' ) cat /downward/pod_annotations
+▪	Press Esc then click :wq to save changes and close the file.
 
-oc delete project $$-development
+8.	Verify the content of Volumes by running the following commands:
+oc rsh $( oc get pod | grep node-s2i-openshift | grep Running | awk '{ print$1 }' ) cat /downward/pod_labels;echo
+oc rsh $( oc get pod | grep node-s2i-openshift | grep Running | awk '{ print$1 }' ) cat /downward/pod_annotations;echo
+
+9.	Delete project by running the following command:
+oc delete project development
