@@ -1,4 +1,28 @@
-#Part 1. Deploying an J2EE application with OpenShift web console
+=====================================
+Part 1 Building and deploying a J2EE application using Red Hat OpenShift web console
+=====================================
 
-#1. Open command line terminal 
+1.  Login to Red Hat OpenShift Cluster Web-UI.
 crc console
+
+*
+* Follow the exercise guide and perform the steps in browser
+*
+
+3c. Enter https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020 in Git Repo URL, 
+click Show Advanced Git Options and enter /employeeman in field Context Dir. 
+Wait for a few seconds until URl is Validated and Java Builder image is detected.
+
+=====================================
+Part 2 Scaling J2EE application
+=====================================
+*
+* Follow the exercise guide and perform the steps in browser
+*
+
+=====================================
+Part 3 Changing the application deployment strategy
+=====================================
+*
+* Follow the exercise guide and perform the steps in browser
+*

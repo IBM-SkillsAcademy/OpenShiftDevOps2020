@@ -1,0 +1,26 @@
+=====================================
+Part 1: Creating your chatbot by setting up Watson Assistant
+=====================================
+*
+* Follow the exercise guide and perform the steps in browser
+*
+
+10. Download, extract, and import the JASON file:
+     a.	Download the skills compressed file from the following website:
+https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020/blob/master/ex-commands/e x09a/skill-CDC-COVID-FAQ.json.zip
+ 
+
+=====================================
+Part 2:	Integrating Watson Assistant with a communication chatbot that is deployed on Red Hat OpenShift Container Platform on IBM Cloud
+=====================================
+*
+* Follow the exercise guide and perform the steps in browser
+*
+
+5.	Enter https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020 into the Git Repo URL field, 
+click Show Advanced Git Options, and enter /covid-simple into the Context Dir field. 
+Wait for a few seconds until the URL is validated and the Node.js image is detected.
+
+
+15c.	Clean up the project that was created for crisis communication by running the following command
+oc delete project crisis-communication
