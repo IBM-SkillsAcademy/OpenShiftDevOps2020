@@ -1,0 +1,77 @@
+=====================================
+Part 1 Accessing the Lab environment
+=====================================
+minikube status
+
+cd /home/ibm
+minikube start
+
+=====================================
+Part 2 Deploying the guestbook application
+=====================================
+minikube start
+
+git clone https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020.git
+cd OpenShiftDevOps2020/guestbook/
+
+cd /home/ibm/OpenShiftDevOps2020/d-na/Kubernetes
+gedit exercise-commands.txt 
+cd OpenShiftDevOps2020/guestbook/ 
+
+kubectl create -f redis-master-deployment.yaml
+
+kubectl create -f redis-master-service.yaml
+
+kubectl create -f redis-slave-deployment.yaml
+
+kubectl create -f redis-slave-service.yaml
+
+kubectl create -f guestbook-deployment.yaml
+
+kubectl create -f guestbook-service.yaml
+
+======================================
+Part 3 Exploring the pod network 
+======================================
+kubectl get pods -o wide	
+
+kubectl exec -it <Name> -- traceroute  <IP>
+
+======================================
+Part 4 Exploring the publishing services (ServiceTypes)
+======================================
+kubectl describe service redis-master
+
+kubectl describe service redis-slave
+
+kubectl describe service guestbook
+
+minikube update-context	
+
+======================================
+Part 5 Exploring the network policies
+======================================
+kubectl get pods -o wide
+
+kubectl run -i --tty --rm busybox --image=busybox -- sh
+
+nc -v -z <Redis IP> 6379
+
+exit
+
+more guestbook-network-policy.yaml
+
+kubectl create -f guestbook-network-policy.yaml
+
+kubectl run -i --tty --rm busybox --image=busybox -- sh
+
+nc -v -z <Redis IP> 6379
+
+exit
+
+======================================
+Part 6 Cleaning up the environment
+======================================
+kubectl delete service --all
+
+kubectl delete deployments --all 
