@@ -15,7 +15,7 @@ git clone https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020.git
 cd OpenShiftDevOps2020/guestbook/
 
 cd /home/ibm/OpenShiftDevOps2020/d-na/Kubernetes
-gedit exercise-commands.txt 
+gedit exercise-commands.txt &
 cd OpenShiftDevOps2020/guestbook/ 
 
 kubectl create -f redis-master-deployment.yaml
