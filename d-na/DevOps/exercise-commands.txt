@@ -1,0 +1,52 @@
+=====================================
+Part 2 Part 2. Deploying Jenkins locally as a CI/CD tool
+=====================================
+oc login -u kubeadmin -p <password> https://api.crc.testing:6443
+
+oc new-project my03-cicd --display-name="My CICD Project"
+
+oc new-app jenkins-ephemeral --param MEMORY_LIMIT=2Gi --param DISABLE_ADMINISTRATIVE_MONITORS=true --param ENABLE_OAUTH=true
+
+oc set resources dc jenkins --limits=cpu=2 --requests=cpu=1,memory=2Gi
+
+eval $(crc oc-env)
+
+watch oc get pods
+
+oc get route jenkins -o jsonpath='{.spec.host}{"\n"}'
+
+======================================
+Part 3 Deploying a Java Platform, Enterprise Edition application by using the oc tool 
+======================================
+oc new-project my03-tasks --display-name="My Tasks Project"
+
+oc new-app java:11~https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020 --context-dir=employeeman --name=employeemancicd
+
+oc expose svc/employeemancicd
+
+watch oc get pods
+
+oc get events
+
+oc get route employeemancicd -o jsonpath='{.spec.host}{"\n"}'
+
+oc set triggers dc employeemancicd --manual
+
+oc policy add-role-to-user edit system:serviceaccount:my03-cicd:jenkins -n my03-tasks
+
+======================================
+Part 4 Creating a Jenkins Pipeline
+======================================
+
+https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020/blob/master/ex-commands/ex06/pipeline/Jenkinsfile
+
+
+======================================
+Part 5 Building an application, tagging the image, and deploying the application by using Jenkins Pipeline
+======================================
+oc get is | grep employeemancicd
+
+======================================
+Part 6  Exploring the Jenkins Pipeline by using the Blue Ocean view
+======================================
+oc delete project my03-tasks my03-cicd
