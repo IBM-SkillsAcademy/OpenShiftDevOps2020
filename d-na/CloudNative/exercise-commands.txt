@@ -3,7 +3,7 @@ Part 1 Configuring an application with the environment variables ConfigMap and V
 =====================================
 oc new-project env
 
-oc new-app https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020 --context-dir=node-s2i-openshift --name=node-s2i-openshift
+oc new-app https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020 --context-dir=node-s2i-openshift --name=node-s2i-openshift --as-deployment-config
 
 oc expose svc node-s2i-openshift
 
@@ -91,9 +91,9 @@ Part 3 Configuring a persistent application with ConfigMap and PersistentVolume
 ======================================
 oc new-project gogs --display-name "Shared Gogs"
 
-oc new-app postgresql-persistent --param POSTGRESQL_DATABASE=gogs --param POSTGRESQL_USER=gogs --param POSTGRESQL_PASSWORD=gogs --param VOLUME_CAPACITY=4Gi -lapp=postgresql_gogs
+oc new-app postgresql-persistent --param POSTGRESQL_DATABASE=gogs --param POSTGRESQL_USER=gogs --param POSTGRESQL_PASSWORD=gogs --param VOLUME_CAPACITY=4Gi -lapp=postgresql_gogs --as-deployment-config
 
-oc new-app quay.io/gpte-devops-automation/gogs:11.91 -lapp=gogs
+oc new-app quay.io/gpte-devops-automation/gogs:11.91 -lapp=gogs --as-deployment-config
 
 oc set volume dc/gogs --add --overwrite --name=gogs-volume-1 --type persistentVolumeClaim --claim-size=4G --claim-name=gogs-data
 
@@ -122,7 +122,7 @@ Part 4 Configuring an application with the environment variable Volumes and the 
 ======================================
 oc new-project development
 
-oc new-app https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020 --context-dir=node-s2i-openshift --name=node-s2i-openshift
+oc new-app https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020 --context-dir=node-s2i-openshift --name=node-s2i-openshift --as-deployment-config
 
 oc expose svc node-s2i-openshift
 
