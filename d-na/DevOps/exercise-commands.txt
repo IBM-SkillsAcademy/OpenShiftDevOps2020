@@ -20,7 +20,7 @@ Part 3 Deploying a Java Platform, Enterprise Edition application by using the oc
 ======================================
 oc new-project my03-tasks --display-name="My Tasks Project"
 
-oc new-app java:11~https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020 --context-dir=employeeman --name=employeemancicd
+oc new-app java:11~https://github.com/IBM-SkillsAcademy/OpenShiftDevOps2020 --context-dir=employeeman --name=employeemancicd --as-deployment-config
 
 oc expose svc/employeemancicd
 
