@@ -164,6 +164,13 @@ describe("@node-red/util/util", function() {
             var v2 = util.getMessageProperty({a:"foo"},"a");
             v2.should.eql("foo");
         });
+        it('retrieves a nested property', function() {
+            var v = util.getMessageProperty({a:"foo",b:{foo:1,bar:2}},"msg.b[msg.a]");
+            v.should.eql(1);
+            var v2 = util.getMessageProperty({a:"bar",b:{foo:1,bar:2}},"b[msg.a]");
+            v2.should.eql(2);
+        });
+
         it('should return undefined if property does not exist', function() {
             var v = util.getMessageProperty({a:"foo"},"msg.b");
             should.not.exist(v);
@@ -189,7 +196,8 @@ describe("@node-red/util/util", function() {
             // setMessageProperty strips off `msg.` prefixes.
             // setObjectProperty does not
             var obj = {};
-            util.setObjectProperty(obj,"msg.a","bar");
+            var result = util.setObjectProperty(obj,"msg.a","bar");
+            result.should.be.true();
             obj.should.have.property("msg");
             obj.msg.should.have.property("a","bar");
         })
@@ -197,59 +205,111 @@ describe("@node-red/util/util", function() {
     describe('setMessageProperty', function() {
         it('sets a property', function() {
             var msg = {a:"foo"};
-            util.setMessageProperty(msg,"msg.a","bar");
+            var result = util.setMessageProperty(msg,"msg.a","bar");
+            result.should.be.true();
             msg.a.should.eql('bar');
         });
         it('sets a deep level property', function() {
             var msg = {a:{b:{c:"foo"}}};
-            util.setMessageProperty(msg,"msg.a.b.c","bar");
+            var result = util.setMessageProperty(msg,"msg.a.b.c","bar");
+            result.should.be.true();
             msg.a.b.c.should.eql('bar');
         });
         it('creates missing parent properties by default', function() {
             var msg = {a:{}};
-            util.setMessageProperty(msg,"msg.a.b.c","bar");
+            var result = util.setMessageProperty(msg,"msg.a.b.c","bar");
+            result.should.be.true();
             msg.a.b.c.should.eql('bar');
         })
         it('does not create missing parent properties', function() {
             var msg = {a:{}};
-            util.setMessageProperty(msg,"msg.a.b.c","bar",false);
+            var result = util.setMessageProperty(msg,"msg.a.b.c","bar",false);
+            result.should.be.false();
             should.not.exist(msg.a.b);
         })
-        it('does not create missing parent properties with array', function () {
+        it('does not create missing parent properties of array', function () {
             var msg = {a:{}};
-            util.setMessageProperty(msg, "msg.a.b[1].c", "bar", false);
+            var result = util.setMessageProperty(msg, "msg.a.b[1].c", "bar", false);
+            result.should.be.false();
             should.not.exist(msg.a.b);
         })
+
+        it('does not create missing parent properties of string', function() {
+            var msg = {a:"foo"};
+            var result = util.setMessageProperty(msg, "msg.a.b.c", "bar", false);
+            result.should.be.false();
+            should.not.exist(msg.a.b);
+        })
+        it('does not set property of existing string property', function() {
+            var msg = {a:"foo"};
+            var result = util.setMessageProperty(msg, "msg.a.b", "bar", false);
+            result.should.be.false();
+            should.not.exist(msg.a.b);
+        })
+
+        it('does not set property of existing number property', function() {
+            var msg = {a:123};
+            var result = util.setMessageProperty(msg, "msg.a.b", "bar", false);
+            result.should.be.false();
+            should.not.exist(msg.a.b);
+        })
+        it('does not create missing parent properties of number', function() {
+            var msg = {a:123};
+            var result = util.setMessageProperty(msg, "msg.a.b.c", "bar", false);
+            result.should.be.false();
+            should.not.exist(msg.a.b);
+        })
+
+        it('does not set property of existing boolean property', function() {
+            var msg = {a:true};
+            var result = util.setMessageProperty(msg, "msg.a.b", "bar", false);
+            result.should.be.false();
+            should.not.exist(msg.a.b);
+        })
+        it('does not create missing parent properties of boolean', function() {
+            var msg = {a:true};
+            var result = util.setMessageProperty(msg, "msg.a.b.c", "bar", false);
+            result.should.be.false();
+            should.not.exist(msg.a.b);
+        })
+
+
         it('deletes property if value is undefined', function() {
             var msg = {a:{b:{c:"foo"}}};
-            util.setMessageProperty(msg,"msg.a.b.c",undefined);
+            var result = util.setMessageProperty(msg,"msg.a.b.c",undefined);
+            result.should.be.true();
             should.not.exist(msg.a.b.c);
         })
         it('does not create missing parent properties if value is undefined', function() {
             var msg = {a:{}};
-            util.setMessageProperty(msg,"msg.a.b.c",undefined);
+            var result = util.setMessageProperty(msg,"msg.a.b.c",undefined);
+            result.should.be.false();
             should.not.exist(msg.a.b);
         });
         it('sets a property with array syntax', function() {
             var msg = {a:{b:["foo",{c:["",""]}]}};
-            util.setMessageProperty(msg,"msg.a.b[1].c[1]","bar");
+            var result = util.setMessageProperty(msg,"msg.a.b[1].c[1]","bar");
+            result.should.be.true();
             msg.a.b[1].c[1].should.eql('bar');
         });
         it('creates missing array elements - final property', function() {
             var msg = {a:[]};
-            util.setMessageProperty(msg,"msg.a[2]","bar");
+            var result = util.setMessageProperty(msg,"msg.a[2]","bar");
+            result.should.be.true();
             msg.a.should.have.length(3);
             msg.a[2].should.eql("bar");
         });
         it('creates missing array elements - mid property', function() {
             var msg = {};
-            util.setMessageProperty(msg,"msg.a[2].b","bar");
+            var result = util.setMessageProperty(msg,"msg.a[2].b","bar");
+            result.should.be.true();
             msg.a.should.have.length(3);
             msg.a[2].b.should.eql("bar");
         });
         it('creates missing array elements - multi-arrays', function() {
             var msg = {};
-            util.setMessageProperty(msg,"msg.a[2][2]","bar");
+            var result = util.setMessageProperty(msg,"msg.a[2][2]","bar");
+            result.should.be.true();
             msg.a.should.have.length(3);
             msg.a.should.be.instanceOf(Array);
             msg.a[2].should.have.length(3);
@@ -258,24 +318,38 @@ describe("@node-red/util/util", function() {
         });
         it('does not create missing array elements - mid property', function () {
             var msg = {a:[]};
-            util.setMessageProperty(msg, "msg.a[1][1]", "bar", false);
+            var result = util.setMessageProperty(msg, "msg.a[1][1]", "bar", false);
+            result.should.be.false();
             msg.a.should.empty();
         });
         it('does not create missing array elements - final property', function() {
             var msg = {a:{}};
-            util.setMessageProperty(msg,"msg.a.b[2]","bar",false);
+            var result = util.setMessageProperty(msg,"msg.a.b[2]","bar",false);
+            result.should.be.false();
             should.not.exist(msg.a.b);
             // check it has not been misinterpreted
             msg.a.should.not.have.property("b[2]");
         });
         it('deletes property inside array if value is undefined', function() {
             var msg = {a:[1,2,3]};
-            util.setMessageProperty(msg,"msg.a[1]",undefined);
+            var result = util.setMessageProperty(msg,"msg.a[1]",undefined);
+            result.should.be.true();
             msg.a.should.have.length(2);
             msg.a[0].should.eql(1);
             msg.a[1].should.eql(3);
         })
-
+        it('handles nested message property references', function() {
+            var obj = {a:"foo",b:{}};
+            var result = util.setObjectProperty(obj,"b[msg.a]","bar");
+            result.should.be.true();
+            obj.b.should.have.property("foo","bar");
+        });
+        it('handles nested message property references', function() {
+            var obj = {a:"foo",b:{"foo":[0,0,0]}};
+            var result = util.setObjectProperty(obj,"b[msg.a][2]","bar");
+            result.should.be.true();
+            obj.b.foo.should.eql([0,0,"bar"])
+        });
     });
 
     describe('evaluateNodeProperty', function() {
@@ -403,12 +477,23 @@ describe("@node-red/util/util", function() {
             // console.log(result);
             result.should.eql(expected);
         }
-
-        function testInvalid(input) {
+        function testABCWithMessage(input,msg,expected) {
+            var result = util.normalisePropertyExpression(input,msg);
+            // console.log("+",input);
+            // console.log(result);
+            result.should.eql(expected);
+        }
+        function testInvalid(input,msg) {
             /*jshint immed: false */
             (function() {
-                util.normalisePropertyExpression(input);
+                util.normalisePropertyExpression(input,msg);
             }).should.throw();
+        }
+        function testToString(input,msg,expected) {
+            var result = util.normalisePropertyExpression(input,msg,true);
+            console.log("+",input);
+            console.log(result);
+            result.should.eql(expected);
         }
         it('pass a.b.c',function() { testABC('a.b.c',['a','b','c']); })
         it('pass a["b"]["c"]',function() { testABC('a["b"]["c"]',['a','b','c']); })
@@ -423,11 +508,24 @@ describe("@node-red/util/util", function() {
         it("pass 'a.b'[1]",function() { testABC("'a.b'[1]",['a.b',1]); })
         it("pass 'a.b'.c",function() { testABC("'a.b'.c",['a.b','c']); })
 
+        it("pass a[msg.b]",function() { testABC("a[msg.b]",["a",["msg","b"]]); })
+        it("pass a[msg[msg.b]]",function() { testABC("a[msg[msg.b]]",["a",["msg",["msg","b"]]]); })
+        it("pass a[msg.b]",function() { testABC("a[msg.b]",["a",["msg","b"]]); })
+        it("pass a[msg.b]",function() { testABC("a[msg.b]",["a",["msg","b"]]); })
+        it("pass a[msg['b]\"[']]",function() { testABC("a[msg['b]\"[']]",["a",["msg","b]\"["]]); })
+        it("pass a[msg['b][']]",function() { testABC("a[msg['b][']]",["a",["msg","b]["]]); })
+        it("pass b[msg.a][2]",function() { testABC("b[msg.a][2]",["b",["msg","a"],2])})
+
+        it("pass b[msg.a][2] (with message)",function() { testABCWithMessage("b[msg.a][2]",{a: "foo"},["b","foo",2])})
 
         it('pass a.$b.c',function() { testABC('a.$b.c',['a','$b','c']); })
         it('pass a["$b"].c',function() { testABC('a["$b"].c',['a','$b','c']); })
         it('pass a._b.c',function() { testABC('a._b.c',['a','_b','c']); })
         it('pass a["_b"].c',function() { testABC('a["_b"].c',['a','_b','c']); })
+
+        it("pass a['a.b[0]'].c",function() { testToString("a['a.b[0]'].c",null,'a["a.b[0]"]["c"]'); })
+        it("pass a.b.c",function() { testToString("a.b.c",null,'a["b"]["c"]'); })
+        it('pass a[msg.c][0]["fred"]',function() { testToString('a[msg.c][0]["fred"]',{c:"123"},'a["123"][0]["fred"]'); })
 
         it("fail a'b'.c",function() { testInvalid("a'b'.c"); })
         it("fail a['b'.c",function() { testInvalid("a['b'.c"); })
@@ -449,6 +547,12 @@ describe("@node-red/util/util", function() {
         it("fail a['']",function() { testInvalid("a['']"); })
         it("fail 'a.b'c",function() { testInvalid("'a.b'c"); })
         it("fail <blank>",function() { testInvalid("");})
+        it("fail a[b]",function() { testInvalid("a[b]"); })
+        it("fail a[msg.]",function() { testInvalid("a[msg.]"); })
+        it("fail a[msg[]",function() { testInvalid("a[msg[]"); })
+        it("fail a[msg.[]]",function() { testInvalid("a[msg.[]]"); })
+        it("fail a[msg['af]]",function() { testInvalid("a[msg['af]]"); })
+        it("fail b[msg.undefined][2] (with message)",function() { testInvalid("b[msg.undefined][2]",{})})
 
     });
 
@@ -499,11 +603,26 @@ describe("@node-red/util/util", function() {
               var result = util.evaluateJSONataExpression(expr,{payload:"hello"});
               result.should.eql("bar");
           });
+          it('accesses undefined environment variable from an expression', function() {
+              var expr = util.prepareJSONataExpression('$env("UTIL_ENV")',{});
+              var result = util.evaluateJSONataExpression(expr,{});
+              result.should.eql('');
+          });
           it('accesses environment variable from an expression', function() {
               process.env.UTIL_ENV = 'foo';
               var expr = util.prepareJSONataExpression('$env("UTIL_ENV")',{});
               var result = util.evaluateJSONataExpression(expr,{});
               result.should.eql('foo');
+          });
+          it('accesses moment from an expression', function() {
+              var expr = util.prepareJSONataExpression('$moment("2020-05-27", "YYYY-MM-DD").add(7, "days").add(1, "months").format("YYYY-MM-DD")',{});
+              var result = util.evaluateJSONataExpression(expr,{});
+              result.should.eql('2020-07-03');
+          });
+          it('accesses moment-timezone from an expression', function() {
+              var expr = util.prepareJSONataExpression('$moment("2013-11-18 11:55Z").tz("Asia/Taipei").format()',{});
+              var result = util.evaluateJSONataExpression(expr,{});
+              result.should.eql('2013-11-18T19:55:00+08:00');
           });
           it('handles non-existant flow context variable', function() {
               var expr = util.prepareJSONataExpression('$flowContext("nonExistant")',{context:function() { return {flow:{get: function(key) { return {'foo':'bar'}[key]}}}}});
@@ -669,6 +788,19 @@ describe("@node-red/util/util", function() {
                 resultJson.name.should.eql('my error obj');
                 resultJson.message.should.eql('my error message');
             });
+
+            it('object with undefined property', function() {
+                var msg = { msg:{a:1,b:undefined,c:3 } };
+                var result = util.encodeObject(msg);
+                result.format.should.eql("Object");
+                var resultJson = JSON.parse(result.msg);
+                resultJson.should.have.property("a",1);
+                resultJson.should.have.property("c",3);
+                resultJson.should.have.property("b");
+                resultJson.b.should.have.property("__enc__", true);
+                resultJson.b.should.have.property("type", "undefined");
+            });
+
             it('constructor of IncomingMessage', function() {
                 function IncomingMessage(){};
                 var msg = { msg:new IncomingMessage() };
@@ -719,6 +851,16 @@ describe("@node-red/util/util", function() {
                 var resultJson = JSON.parse(result.msg);
                 resultJson[0].should.eql('abc...');
                 resultJson[1].should.eql('123...');
+            });
+            it('array containing undefined', function() {
+                var msg = { msg:[1,undefined,3]};
+                var result = util.encodeObject(msg);
+                result.format.should.eql("array[3]");
+                var resultJson = JSON.parse(result.msg);
+                resultJson[0].should.eql(1);
+                resultJson[2].should.eql(3);
+                resultJson[1].__enc__.should.be.true();
+                resultJson[1].type.should.eql("undefined");
             });
             it('array of function', function() {
                 var msg = { msg:[function(){}] };
@@ -889,4 +1031,5 @@ describe("@node-red/util/util", function() {
 
         });
     });
+
 });
